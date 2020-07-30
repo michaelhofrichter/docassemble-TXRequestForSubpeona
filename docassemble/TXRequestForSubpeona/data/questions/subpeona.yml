@@ -1,0 +1,298 @@
+---
+metadata:
+  title: |
+    Request for Issuance of Subpeona - TX
+  short title: |
+    Subpeona
+  description: |
+    This interview produces a Request for Issuance of a Subpeona
+    for JP court in Texas.
+  authors:
+    - name: Michael Hofrichter
+      organization: Example, Inc.
+  revision_date: 2020-07-29
+  documentation: "https://docassemble.org/docs/initial.html#metadata"
+---
+modules:
+  - .FIPS
+---
+objects: 
+  - applicant: Individual
+  - respondent: Individual
+  - witnesses: DAList.using(object_type=Individual, there_are_any=True, complete_attribute='complete')
+---
+mandatory: true
+code: | 
+  applicant.agreeTOU
+  cause_number
+  precinct_number
+  county
+  applicant.name.first
+  applicant.address.address
+  applicant.email
+  applicant.mobile_phone
+  applicant.is_plaintiff
+  respondent.name.first
+  witnesses.gather()
+  user_understands_how_to_use_signature_feature
+  applicant.signature
+  applicant.signature_verified
+  user_approves
+---
+code: |
+  witnesses[i].name.first 
+  witnesses[i].address.address
+  witnesses[i].requests
+  witnesses[i].complete = True
+---
+question: |
+  Welcome to Request for Subpeona Document Generation
+fields:
+  # - "What language do you speak?  (¿Qué idioma habla?)": applicant.language
+  #   datatype: radio
+  #   choices:
+  #   - English: en
+  #   - Español: es
+  #   default: en
+  # - note: |
+  #     
+  #   js show if: |
+  #     val('applicant.language') == 'es'
+  # 
+  - note: |
+      This tool is designed to demonstrate automating the Texas state form on Request for Issuance of a Subpeona. It will ask a number of questions regarding your current court case and the witnesses you seek to compell. 
+      
+        You can click on any green text for a helpful definition or description. 
+        
+        You will have the option of getting an email with the final form. Theoretically, you could also link this to the ability to send this to the opposing party via email as part of the final step. 
+    # js show if: |
+    #   val('applicant.language') != 'es'
+  - "I accept the terms of use": applicant.agreeTOU
+    choices:
+      - "I agree"
+    datatype: checkboxes
+    none of the above: False  
+    minlength: 1
+  #   show if:
+  #     variable: applicant.language
+  #     is: "en"
+    validation messages: 
+      minlength: |
+        You cannot continue until you agree to the terms of service.
+  # - "Estoy de acuerdo con las condiciones de uso.": applicant.agreeTOU
+  #   choices:
+  #     - "Acepto"
+  #   datatype: checkboxes
+  #   minlength: 1
+  #   none of the above: False  
+  #   validation messages: 
+  #     minlength: |
+  #       No puede continuar hasta que acepte los términos del servicio.
+  #   show if:
+  #     variable: applicant.language
+  #     is: "es"
+under: |
+  Feedback, comments or suggestions: [contact Michael Hofrichter](mailto:michael.hofrichter@gmail.com)
+
+---
+question: |
+  Cause Number
+fields:  
+  - What is the Cause Number of the case?: cause_number
+---
+question: | 
+  Are there any more witnesses?
+yesno: witnesses.there_is_another
+---
+question: | 
+  Precinct
+fields:  
+  - What is the Precinct Number of the JP Court?: precinct_number
+--- 
+question: | 
+  County
+fields:  
+  - What county is the court in?: county
+    datatype: dropdown
+    code: |
+      counties_list('TX')
+---
+question: | 
+  Witness Requests
+fields:  
+  - Are there any required books, papers, documents, or other tangible things that the witness needs to bring?: witnesses[i].requests
+    datatype: area
+---
+generic object: Individual
+question: |
+  Where ${ x.do_question('live') }?
+fields:
+  - Address: x.address.address
+  - Unit: x.address.unit
+    required: False
+    help: The apartment, suite, or unit number of the residence.
+  - City: x.address.city
+  - State: x.address.state
+    default: 'TX'
+    code: |
+      us.states.mapping('abbr', 'name')
+  - Zip: x.address.zip
+    required: False
+---
+question: |
+  Where ${ witnesses[i].do_question('live') }?
+fields:
+  - Address: witnesses[i].address.address
+  - Unit: witnesses[i].address.unit
+    required: False
+    help: The apartment, suite, or unit number of the residence.
+  - City: witnesses[i].address.city
+  - State: witnesses[i].address.state
+    default: 'TX'
+    code: |
+      us.states.mapping('abbr', 'name')
+  - Zip: witnesses[i].address.zip
+    required: False
+---
+generic object: Individual
+question: |
+  What is ${ x.possessive('e-mail address') }?
+fields:
+  - E-mail: x.email
+    datatype: email
+---
+question: |
+  What is your phone number?
+fields:
+  - label: |
+      Is your mobile phone number
+      based in the United States
+      or Canada?
+    field: applicant.phone_international
+    datatype: noyesradio
+    default: False
+  - label: |
+      What country is associated
+      with your mobile phone number?
+    field: applicant.phone_country
+    code: countries_list()
+    show if: applicant.phone_international
+  - label: |
+      Enter your phone number
+    field: applicant.mobile_number
+validation code: |
+  if applicant.phone_international:
+    if not phone_number_is_valid(applicant.mobile_number, country=applicant.phone_country):
+      validation_error('Please enter a valid phone number for ' + country_name(applicant.phone_country) + '.', field='applicant.mobile_number')
+  else:
+    if not phone_number_is_valid(applicant.mobile_number):
+      validation_error('Please enter a valid phone number.', field='applicant.mobile_number')
+---
+code: |
+  if not applicant.phone_international:
+    applicant.phone_country = 'US'
+---
+question: |
+  Are you the plaintiff in this case?
+subquestion: |
+  A "plaintiff" is a person who starts a case by filing a lawsuit
+  against a person called a "defendant."  Plaintiffs and defendants
+  are the "parties" in a case.
+decoration: |
+  scalesofjustice
+yesno: applicant.is_plaintiff
+---
+code: | 
+  if applicant.is_plaintiff:
+    plaintiff = applicant.name
+    defendant = respondent.name
+  else:
+    defendant = applicant.name
+    plaintiff = respondent.name
+---
+question: |
+  Please sign your name below.
+signature: applicant.signature
+under: |
+  ${ applicant }
+---
+generic object: Individual
+question: |
+  Is this ${ x.possessive('signature') }?
+subquestion: |
+  ${ x.signature.show() }
+field: x.signature_verified_button
+buttons:
+  - Yes: True
+  - No: False
+  - Let me try again: Null
+---
+generic object: Individual
+code: |
+  if x.signature_verified_button in (True, False):
+    x.signature_verified = x.signature_verified_button
+  else:
+    force_ask('x.signature', 'x.signature_verified_button')
+---
+generic object: Individual
+question: |
+  Sign your name
+signature: x.signature
+need:
+  - x.name.first
+  - user_understands_how_to_use_signature_feature
+under: |
+  ${ x.name }
+---
+generic object: Individual
+question: |
+  What is ${ x.object_possessive('name') }?
+fields:
+  - First Name: x.name.first
+    default: ${ x.first_name_hint() }
+  - Middle Name: x.name.middle
+    required: False
+  - Last Name: x.name.last
+    default: ${ x.last_name_hint() }
+  - Suffix: x.name.suffix
+    required: False
+    code: |
+      name_suffix()
+---
+question: |
+  What is the name of the ${ ordinal(i) } witness?
+fields:
+  - First Name: witnesses[i].name.first
+  - Middle Name: witnesses[i].name.middle
+    required: False
+  - Last Name: witnesses[i].name.last
+  - Suffix: witnesses[i].name.suffix
+    required: False
+    code: |
+      name_suffix()
+---
+field: user_understands_how_to_use_signature_feature
+question: Instructions for signing your name
+subquestion: |
+  On the next screen, you will see a box in which you can sign your
+  name using your mouse, track pad, or touch screen.  If you make a
+  mistake, you can press "Clear" and try again.  For best results, try
+  signing your name *slowly*.
+---
+question: |
+  Here is your document.
+subquestion: |
+  Does it meet your approval?
+yesno: user_approves
+attachment:
+  name: Subpeona Request
+  filename: Request
+  docx template file: Request_for_Subpoena_DA.docx
+  valid formats:
+    - pdf
+    - docx
+---
+code: | 
+  signing_day = ordinal_number(int(format_date(today(), format='d')), use_word=False)
+  signing_month = format_date(today(), format='MMMM')
+  signing_year = format_date(today(), format='YYYY')
