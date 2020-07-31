@@ -30,7 +30,7 @@ code: |
   applicant.name.first
   applicant.address.address
   applicant.email
-  applicant.mobile_phone
+  applicant.mobile_number
   applicant.is_plaintiff
   respondent.name.first
   witnesses.gather()

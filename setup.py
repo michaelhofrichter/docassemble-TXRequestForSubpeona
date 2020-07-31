@@ -43,7 +43,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.TXRequestForSubpeona',
-      version='0.0.1',
+      version='0.0.2',
       description=('A docassemble extension.'),
       long_description='Originally designed for the 2020 Texas Poverty Law Conference.',
       long_description_content_type='text/markdown',
