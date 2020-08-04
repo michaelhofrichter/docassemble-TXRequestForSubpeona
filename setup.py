@@ -43,9 +43,9 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 setup(name='docassemble.TXRequestForSubpeona',
-      version='0.0.2',
+      version='0.0.3',
       description=('A docassemble extension.'),
-      long_description='Originally designed for the 2020 Texas Poverty Law Conference.',
+      long_description='Originally designed for the 2020 Texas Poverty Law Conference.\r\n\r\nNeed to fix signature code. ',
       long_description_content_type='text/markdown',
       author='Michael Hofrichter',
       author_email='michael.hofrichter@gmail.com',

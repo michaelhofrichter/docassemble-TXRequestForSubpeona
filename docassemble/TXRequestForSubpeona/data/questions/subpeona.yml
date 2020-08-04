@@ -10,7 +10,7 @@ metadata:
   authors:
     - name: Michael Hofrichter
       organization: Example, Inc.
-  revision_date: 2020-07-29
+  revision_date: 2020-08-03
   documentation: "https://docassemble.org/docs/initial.html#metadata"
 ---
 modules:
@@ -33,17 +33,28 @@ code: |
   applicant.mobile_number
   applicant.is_plaintiff
   respondent.name.first
+  witness_intro
   witnesses.gather()
-  user_understands_how_to_use_signature_feature
-  applicant.signature
-  applicant.signature_verified
-  user_approves
+  
+  applicant.signature = "SAMPLE SIGNATURE"
+  if user_approves:
+    undefine('applicant.signature')
+    user_understands_how_to_use_signature_feature
+    applicant.signature_verified
+      
+  final_doc
 ---
 code: |
   witnesses[i].name.first 
   witnesses[i].address.address
   witnesses[i].requests
   witnesses[i].complete = True
+---
+question: | 
+  Witnesses who need to be Subpeonaed
+subquestion: | 
+  The next set of questions will ask you about the individual or individuals you need to request to be subpeonaed in this case. There are a few questions for each witness. 
+field: witness_intro
 ---
 question: |
   Welcome to Request for Subpeona Document Generation
@@ -283,6 +294,8 @@ question: |
   Here is your document.
 subquestion: |
   Does it meet your approval?
+  
+  If you approve it, you will be asked to electronically sign the document before getting the final signed copy. 
 yesno: user_approves
 attachment:
   name: Subpeona Request
@@ -290,7 +303,49 @@ attachment:
   docx template file: Request_for_Subpoena_DA.docx
   valid formats:
     - pdf
-    - docx
+---
+question: |
+  Final Document.
+subquestion: |
+  Please find attached the final request for Subpeona as a PDF. 
+  
+  % if email_service: 
+  A PDF copy has been emailed to the opposing party/counsel in this case for their service. Your email address is on the CC line of the email. 
+  % endif
+  
+yesno: final_doc
+attachment:
+  name: Subpeona Request Final
+  filename: Request_Final
+  docx template file: Request_for_Subpoena_DA.docx
+  valid formats:
+    - pdf
+---
+question: | 
+  Service
+subquestion: | 
+  You are required to send this document to the respondent in the case. How do you intend to do that? 
+fields: 
+  - no label: service_method
+    choices: 
+      - Personal Delivery
+      - Mail
+      - Email (where both parties have agreed in writing to do so): Email
+      - Fax 
+      - Another method
+  - Alternate Method: service_method_alternate
+    js show if: |
+      val('service_method') == "Another method"
+  - Respondent's Email: respondent.email
+    datatype: email
+    js show if: |
+      val('service_method') == "Email" 
+---
+code: | 
+  if service_method == "Email":
+    email_service = True
+  else: 
+    email_service = False
 ---
 code: | 
   signing_day = ordinal_number(int(format_date(today(), format='d')), use_word=False)
