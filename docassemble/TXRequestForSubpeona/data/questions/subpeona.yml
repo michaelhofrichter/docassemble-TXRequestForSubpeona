@@ -36,9 +36,7 @@ code: |
   witness_intro
   witnesses.gather()
   
-  applicant.signature = "SAMPLE SIGNATURE"
   if user_approves:
-    undefine('applicant.signature')
     user_understands_how_to_use_signature_feature
     applicant.signature_verified
       
@@ -303,6 +301,8 @@ attachment:
   docx template file: Request_for_Subpoena_DA.docx
   valid formats:
     - pdf
+allow emailing: False
+---
 ---
 question: |
   Final Document.
@@ -310,10 +310,13 @@ subquestion: |
   Please find attached the final request for Subpeona as a PDF. 
   
   % if email_service: 
-  A PDF copy has been emailed to the opposing party/counsel in this case for their service. Your email address is on the CC line of the email. 
+  A PDF copy would be emailed to the opposing party/counsel in this case for their service. Your email address is on the CC line of the email. 
   % endif
   
-yesno: final_doc
+event: final_doc
+buttons:
+  - Exit: exit
+  - Restart: restart
 attachment:
   name: Subpeona Request Final
   filename: Request_Final
